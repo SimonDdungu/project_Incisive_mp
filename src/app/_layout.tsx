@@ -1,18 +1,34 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import "@/global.css";
+import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
-
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import migrations from '../../drizzle/migrations';
+import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
+import { db } from '@/database/connection/connection';
+import { useEffect } from "react";
 
 SplashScreen.preventAutoHideAsync();
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+export default function RootLayout() {
+
+  const { success, error } = useMigrations(db, migrations);
+
+  useEffect(() => {
+    if (success) {
+      console.log('Database migrations successful.');
+    }
+
+    if (error) {
+      console.error('Database migrations failed:', error);
+    }
+  }, [success, error]);
+
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+     <SafeAreaView style={{ flex: 1 }}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+      </Stack>
+    </SafeAreaView>
   );
 }
