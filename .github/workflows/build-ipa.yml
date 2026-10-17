@@ -70,7 +70,7 @@ jobs:
 
       - name: Build (unsigned)
         working-directory: target/${{ inputs.app_dir }}
-       run: |
+        run: |
           mkdir -p build
           set -o pipefail
           xcodebuild \
