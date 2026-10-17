@@ -70,7 +70,9 @@ jobs:
 
       - name: Build (unsigned)
         working-directory: target/${{ inputs.app_dir }}
-        run: |
+       run: |
+          mkdir -p build
+          set -o pipefail
           xcodebuild \
             -workspace "${{ steps.target_scheme.outputs.workspace }}" \
             -scheme "${{ steps.target_scheme.outputs.scheme }}" \
@@ -83,7 +85,11 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGN_ENTITLEMENTS="" \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            build
+            build 2>&1 | tee build/xcodebuild.log || {
+              echo "========== ACTUAL BUILD ERRORS =========="
+              grep -n -B 5 -A 10 -E 'error:|fatal error:|BUILD FAILED|Command .* failed|PhaseScriptExecution' build/xcodebuild.log | tail -n 160 || true
+              exit 1
+            }
 
       - name: Package unsigned IPA
         working-directory: target/${{ inputs.app_dir }}
