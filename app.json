@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.chainberstest.project_Incisive_mp"
+      "bundleIdentifier": "com.chainberstest.project-Incisive-mp"
     },
     "android": {
       "adaptiveIcon": {
