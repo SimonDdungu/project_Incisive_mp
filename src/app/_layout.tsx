@@ -21,6 +21,11 @@ export default function RootLayout() {
     if (error) {
       console.error('Database migrations failed:', error);
     }
+
+    if (success || error) {
+      SplashScreen.hideAsync();
+    }
+    
   }, [success, error]);
 
 
