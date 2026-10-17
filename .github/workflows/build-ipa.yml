@@ -110,5 +110,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.ipa_name }}
-          path: target/${{ inputs.app_dir }}/build/${{ inputs.ipa_name }}.ipa
+          path:  target/build/${{ inputs.ipa_name }}.ipa
           retention-days: 14
