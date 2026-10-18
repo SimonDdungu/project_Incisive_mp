@@ -13,8 +13,6 @@ export async function generateThumbnail(input: string, duration: number, filenam
         input,
         '-frames:v',
         '1',
-        '-vf',
-        'scale=320:-2',
         '-q:v',
         '2',
         outputPath,

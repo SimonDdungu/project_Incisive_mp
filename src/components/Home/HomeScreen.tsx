@@ -1,21 +1,26 @@
 import { db } from '@/database/connection/connection';
 import { videos } from "@/database/models/videos/video";
-import * as DocumentPicker from "expo-document-picker";
-import { Directory, File, Paths } from "expo-file-system";
-import { useEffect, useState } from 'react';
-import { Alert, FlatList, Pressable, Text, View, Image } from 'react-native';
-import { randomUUID } from 'expo-crypto';
-import { getVideoInfoAsync } from 'expo-video-metadata';
+import { getFileSize } from '@/helpers/file_size/getFileSize';
+import { generateThumbnail } from '@/helpers/thumbnails/generateThumbnails';
 import { formatDuration } from '@/helpers/video_formats/format_duration';
 import { formatResolution } from '@/helpers/video_formats/format_resolution';
-import * as VideoThumbnails from 'expo-video-thumbnails';
-import { generateThumbnail } from '@/helpers/thumbnails/generateThumbnails';
+import { Ionicons } from "@expo/vector-icons";
+import { randomUUID } from 'expo-crypto';
+import * as DocumentPicker from "expo-document-picker";
+import { Directory, File, Paths } from "expo-file-system";
+import { getVideoInfoAsync } from 'expo-video-metadata';
+import { useEffect, useState } from 'react';
+import { Alert, FlatList, Image, Pressable, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+
 
 export default function HomeScreen() {
     const [media, setMedia] = useState<any[]>([]);
 
-    useEffect(() => {
-    const loadVideos = async () => {
+    const insets = useSafeAreaInsets();
+
+    async function loadVideos(){
         try {
             const storedVideos = await db.select().from(videos);
 
@@ -24,25 +29,28 @@ export default function HomeScreen() {
                   try {
                     const info = await getVideoInfoAsync(video.uri, { includeMetadataTags: true, exactDuration: true });
                     const thumbnail = await generateThumbnail(video.uri, info.duration, video.filename);
+                    const fileSize = await getFileSize(video.uri);
 
-                    return {...video, metadata: info, thumbnail: thumbnail};
+                    return {...video, metadata: info, thumbnail: thumbnail, fileSize: fileSize};
                   } catch (error) {
                     console.error(`Thumbnail failed for ${video.filename}:`, error);
                   }
                 })
               );
 
-      // console.log("Stored videos: ", JSON.stringify(videosDetails, null, 2)  )
+            setMedia(videosDetails);
 
-      setMedia(videosDetails);
+              console.log("Videos: ", media)
 
         } catch (error) {
             console.error('Failed to load videos:', error);
         }
     };
 
-    loadVideos();
-}, [media]);
+
+    useEffect(() => {
+      loadVideos();
+    }, []);
     
     const importVideos = async () => {
         const selectedFiles = await DocumentPicker.getDocumentAsync({ type: "video/*", multiple: true, copyToCacheDirectory: true });
@@ -53,7 +61,7 @@ export default function HomeScreen() {
             directory.create({ idempotent: true, intermediates: true });
 
             const addedVideos = selectedFiles.assets.map((video) => {
-                const destination = new File(directory, `${randomUUID()}-${video.name}`);
+                const destination = new File(directory, `${video.name}-${randomUUID()}`);
                 new File(video.uri).copy(destination);
                 return { ...video, uri: destination.uri };
             });
@@ -64,13 +72,10 @@ export default function HomeScreen() {
                 filename: video.name,
             })));
 
-            setMedia((currentVideos) => [...currentVideos, ...addedVideos]);
+            loadVideos();
         } catch (error) {
             console.error('Import video error:', error);
-            Alert.alert(
-                'Import Error',
-                error instanceof Error ? error.message : String(error)
-            );
+            Alert.alert('Import Error', error instanceof Error ? error.message : String(error));
         }
     };
 
@@ -83,16 +88,17 @@ export default function HomeScreen() {
         Videos
       </Text>
 
-      <Text className="mb-8 text-sm text-gray-400">
-        Search...
-      </Text>
+      <TextInput className="mb-8 text-sm text-gray-200 placeholder:text-gray-400"
+        placeholder="Search..."
+      />
 
-      <Pressable
+      <Pressable className="size-14 rounded-full bg-red-500 items-center justify-center absolute bottom-24 right-5 z-10"
+      style={{ position: "absolute", bottom: insets.bottom + 5, right: 20 }}
         onPress={importVideos}
-        className="rounded-lg bg-red-500 px-4 py-3 items-center"
       >
-        <Text className="font-semibold text-white">Import Videos</Text>
+         <Ionicons name="add" size={24} color="white" />
       </Pressable>
+
 
       <FlatList
       data={media}
@@ -105,7 +111,7 @@ export default function HomeScreen() {
 
           {/* Video Overlay */}
           <View className="aspect-video items-center justify-center bg-neutral-900 relative">
-              {item.thumbnailUri ? (
+              {item.thumbnail ? (
                 <Image
                   source={{ uri: item.thumbnail}}
                   className="h-full w-full"
@@ -120,24 +126,31 @@ export default function HomeScreen() {
                 )}
 
 
+            <Text className="text-xs text-white absolute top-1 left-1 bg-black/50 rounded-xl px-2"  numberOfLines={1}>
+              {formatResolution(item.metadata?.height)}
+            </Text>
+
             <Text className="text-xs text-white absolute bottom-1 right-1 bg-black/50 rounded-xl px-2"  numberOfLines={1}>
               {formatDuration(item.metadata?.duration)}
             </Text>
 
-            <Text className="text-xs text-white absolute bottom-1 left-1 bg-black/50 rounded-xl px-2"  numberOfLines={1}>
-              {formatResolution(item.metadata?.height)}
-            </Text>
           </View>
 
 
           {/* Other properties */}
           <View className='p-3'>
-            <Text className="text-sm text-white"  numberOfLines={2}>
+            <Text className="text-sm text-white mb-2"  numberOfLines={2}>
               {item.metadata?.metadataTags?.title || item.filename}
             </Text>
+
+            <Text className="text-xs text-white text-right"  numberOfLines={2}>
+              {item?.fileSize}
+            </Text>
+
           </View>
         </Pressable>
       )}
+
       ListEmptyComponent={
         <Text className="mt-8 text-center text-sm text-gray-400">
           No videos imported yet.

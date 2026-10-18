@@ -28,6 +28,8 @@ export default function RootLayout() {
     
   }, [success, error]);
 
+   if (!success && !error) return null;
+
 
   return (
      <SafeAreaView style={{ flex: 1 }}>
