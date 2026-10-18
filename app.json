@@ -35,7 +35,14 @@
         }
       ],
       "expo-sqlite",
-      "expo-media-library"
+      "expo-media-library",
+      [
+        "expo-libvlc-player",
+        {
+          "localNetworkPermission": "Allow $(PRODUCT_NAME) to access your local network",
+          "supportsPictureInPicture": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
