@@ -9,6 +9,7 @@ import { getVideoInfoAsync } from 'expo-video-metadata';
 import { formatDuration } from '@/helpers/video_formats/format_duration';
 import { formatResolution } from '@/helpers/video_formats/format_resolution';
 import * as VideoThumbnails from 'expo-video-thumbnails';
+import { generateThumbnail } from '@/helpers/thumbnails/generateThumbnails';
 
 export default function HomeScreen() {
     const [media, setMedia] = useState<any[]>([]);
@@ -22,9 +23,9 @@ export default function HomeScreen() {
                 storedVideos.map(async (video) => {
                   try {
                     const info = await getVideoInfoAsync(video.uri, { includeMetadataTags: true, exactDuration: true });
-                    const thumbnail = await VideoThumbnails.getThumbnailAsync(video.uri, { time: 1000 });
+                    const thumbnail = await generateThumbnail(video.uri, info.duration, video.filename);
 
-                    return {...video, metadata: info, thumbnailUri: thumbnail.uri};
+                    return {...video, metadata: info, thumbnail: thumbnail};
                   } catch (error) {
                     console.error(`Thumbnail failed for ${video.filename}:`, error);
                   }
@@ -41,7 +42,7 @@ export default function HomeScreen() {
     };
 
     loadVideos();
-}, [videos]);
+}, [media]);
     
     const importVideos = async () => {
         const selectedFiles = await DocumentPicker.getDocumentAsync({ type: "video/*", multiple: true, copyToCacheDirectory: true });
@@ -106,7 +107,7 @@ export default function HomeScreen() {
           <View className="aspect-video items-center justify-center bg-neutral-900 relative">
               {item.thumbnailUri ? (
                 <Image
-                  source={{ uri: item.thumbnailUri }}
+                  source={{ uri: item.thumbnail}}
                   className="h-full w-full"
                   resizeMode="cover"
                 />
