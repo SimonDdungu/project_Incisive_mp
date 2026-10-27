@@ -1,5 +1,6 @@
 import { db } from '@/database/connection/connection';
 import { videos } from "@/database/models/videos/video";
+import { getDisplayTitle } from '@/helpers/file_name/getVideoTitle';
 import { getFileSize } from '@/helpers/file_size/getFileSize';
 import { generateThumbnail } from '@/helpers/thumbnails/generateThumbnails';
 import { formatDuration } from '@/helpers/video_formats/format_duration';
@@ -30,8 +31,11 @@ export default function HomeScreen() {
                     const info = await getVideoInfoAsync(video.uri, { includeMetadataTags: true, exactDuration: true });
                     const thumbnail = await generateThumbnail(video.uri, info.duration, video.filename);
                     const fileSize = await getFileSize(video.uri);
+                    const displayTitle = await getDisplayTitle(video.filename)
 
-                    return {...video, metadata: info, thumbnail: thumbnail, fileSize: fileSize};
+                    console.log("video titles:", displayTitle);
+
+                    return {...video, metadata: info, thumbnail: thumbnail, fileSize: fileSize, name: displayTitle};
                   } catch (error) {
                     console.error(`Thumbnail failed for ${video.filename}:`, error);
                   }
@@ -40,8 +44,7 @@ export default function HomeScreen() {
 
             setMedia(videosDetails);
 
-              console.log("Videos: ", media)
-
+              
         } catch (error) {
             console.error('Failed to load videos:', error);
         }
@@ -105,9 +108,9 @@ export default function HomeScreen() {
       numColumns={2}
       keyExtractor={(item) => item.uri}
       columnWrapperStyle={{ gap: 12 }}
-      contentContainerStyle={{ gap: 12 }}
+      contentContainerStyle={{ gap: 6 }}
       renderItem={({ item }) => (
-        <Pressable className="flex-1 overflow-hidden rounded-lg bg-neutral-900">
+        <Pressable className="w-1/2 overflow-hidden rounded-lg bg-neutral-900">
 
           {/* Video Overlay */}
           <View className="aspect-video items-center justify-center bg-neutral-900 relative">
@@ -140,7 +143,7 @@ export default function HomeScreen() {
           {/* Other properties */}
           <View className='p-3'>
             <Text className="text-sm text-white mb-2"  numberOfLines={2}>
-              {item.metadata?.metadataTags?.title || item.filename}
+              {item.name|| item.filename}
             </Text>
 
             <Text className="text-xs text-white text-right"  numberOfLines={2}>

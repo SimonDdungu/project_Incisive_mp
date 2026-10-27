@@ -3,7 +3,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 
 export async function generateThumbnail(input: string, duration: number, filename: string) {
     const outputPath = `${FileSystem.cacheDirectory}${filename}_${Date.now()}_thumbnail.jpg`;
-    const timestamp = duration * 0.15
+    const timestamp = duration * 0.20
 
     const result = await execute([
         '-y',
